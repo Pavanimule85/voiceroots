@@ -573,10 +573,25 @@ export const DialectStudio: React.FC<DialectStudioProps> = ({
         text: `Transcribed & translated: ${data.sourceTranscript?.slice(0, 60)} → ${data.translatedText?.slice(0, 60)}`,
       });
     } catch (err) {
-      setStatusBanner({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Audio processing failed.',
-      });
+      // Fallback to local translation pack if server fails or times out
+      if (installedPack || downloadedPacks.length > 0) {
+        const packToUse = installedPack || downloadedPacks[0];
+        const localRes = runOfflineAudioTranscription(packToUse, liveSpeechPreview, targetLanguage);
+        setSourceTranscript(localRes.sourceTranscript);
+        setTranslatedText(localRes.translatedText);
+        setPhoneticIpa(localRes.phoneticIpa);
+        setGrammarNotes(localRes.grammarSuggestions);
+        setModelTag(`Local Dialect Pack (${packToUse.iso} v${packToUse.version})`);
+        setStatusBanner({
+          type: 'info',
+          text: `Gemini unavailable — translated using local ${packToUse.dialectName} dialect pack.`,
+        });
+      } else {
+        setStatusBanner({
+          type: 'error',
+          text: err instanceof Error ? err.message : 'Audio processing failed.',
+        });
+      }
     } finally {
       setIsProcessing(false);
     }
@@ -627,10 +642,24 @@ export const DialectStudio: React.FC<DialectStudioProps> = ({
       setModelTag(data.modelUsed || 'gemini-4-hydrogen');
       setStatusBanner({ type: 'success', text: `Translated ${activeDialect.name} to ${targetLanguage}.` });
     } catch (err) {
-      setStatusBanner({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Translation failed.',
-      });
+      // Fallback to local translation pack if server fails or times out
+      if (installedPack || downloadedPacks.length > 0) {
+        const packToUse = installedPack || downloadedPacks[0];
+        const localRes = runOfflineTranslation(sourceTranscript, packToUse, targetLanguage);
+        setTranslatedText(localRes.translatedText);
+        setPhoneticIpa(localRes.phoneticIpa);
+        setGrammarNotes(localRes.grammarSuggestions);
+        setModelTag(`Local Dialect Pack (${packToUse.iso} v${packToUse.version})`);
+        setStatusBanner({
+          type: 'info',
+          text: `Gemini unavailable — translated using local ${packToUse.dialectName} dialect pack.`,
+        });
+      } else {
+        setStatusBanner({
+          type: 'error',
+          text: err instanceof Error ? err.message : 'Translation failed.',
+        });
+      }
     } finally {
       setIsProcessing(false);
     }
