@@ -12,6 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = Number(process.env.PORT) || 3000;
+const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS) || 45000;
 
 function getGeminiClient(): GoogleGenAI {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -26,6 +27,15 @@ function getGeminiClient(): GoogleGenAI {
       },
     },
   });
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms / 1000}s`)), ms)
+    ),
+  ]);
 }
 
 function computeLevenshtein<T>(ref: T[], hyp: T[]): {
@@ -195,18 +205,19 @@ async function startServer() {
       const ai = getGeminiClient();
 
       // Multimodal audio transcription + translation + IPA + grammar via gemini-4-hydrogen
-      const analysisResp = await ai.models.generateContent({
-        model: 'gemini-4-hydrogen',
-        contents: {
-          parts: [
-            {
-              inlineData: {
-                mimeType: cleanMime,
-                data: audioBase64,
+      const analysisResp = await withTimeout(
+        ai.models.generateContent({
+          model: 'gemini-4-hydrogen',
+          contents: {
+            parts: [
+              {
+                inlineData: {
+                  mimeType: cleanMime,
+                  data: audioBase64,
+                },
               },
-            },
-            {
-              text: `You are an expert Indian computational linguist specializing in low-resource and endangered dialects.
+              {
+                text: `You are an expert Indian computational linguist specializing in low-resource and endangered dialects.
 Listen carefully to this spoken ${dialect} audio clip.
 Target Translation Language: ${target}
 
@@ -216,25 +227,28 @@ Return a JSON object with:
 3. translatedText: Accurate, natural translation into ${target} preserving cultural idioms and register.
 4. phoneticIpa: Phonetic IPA + Romanized pronunciation guide for the utterance.
 5. grammarSuggestions: Concise grammatical breakdown (morphology, postpositions, verb agreement, and suggested normalization or preservation notes).`,
-            },
-          ],
-        },
-        config: {
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              rawTranscript: { type: Type.STRING },
-              cleanedTranscript: { type: Type.STRING },
-              translatedText: { type: Type.STRING },
-              phoneticIpa: { type: Type.STRING },
-              grammarSuggestions: { type: Type.STRING },
-            },
-            required: ['rawTranscript', 'cleanedTranscript', 'translatedText', 'phoneticIpa', 'grammarSuggestions'],
+              },
+            ],
           },
-        },
-      });
+          config: {
+            thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                rawTranscript: { type: Type.STRING },
+                cleanedTranscript: { type: Type.STRING },
+                translatedText: { type: Type.STRING },
+                phoneticIpa: { type: Type.STRING },
+                grammarSuggestions: { type: Type.STRING },
+              },
+              required: ['rawTranscript', 'cleanedTranscript', 'translatedText', 'phoneticIpa', 'grammarSuggestions'],
+            },
+          },
+        }),
+        GEMINI_TIMEOUT_MS,
+        'Gemini transcription'
+      );
 
       const parsed = JSON.parse((analysisResp.text ?? '{}').trim() || '{}');
       const rawTranscript = (parsed.rawTranscript || parsed.cleanedTranscript || '').trim();
@@ -269,28 +283,32 @@ Return a JSON object with:
       const target = typeof targetLanguage === 'string' && targetLanguage.trim() ? targetLanguage : 'English';
 
       const ai = getGeminiClient();
-      const resp = await ai.models.generateContent({
-        model: 'gemini-4-hydrogen',
-        contents: `You are an expert Indian computational linguist preserving low-resource dialects.
+      const resp = await withTimeout(
+        ai.models.generateContent({
+          model: 'gemini-4-hydrogen',
+          contents: `You are an expert Indian computational linguist preserving low-resource dialects.
 Source Dialect: ${dialect}
 Target Language: ${target}
 Input Utterance: """${text.trim()}"""
 
 Translate accurately into ${target}, provide an IPA/Romanized phonetic guide, and give grammar suggestions & heritage morphological notes.`,
-        config: {
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              translatedText: { type: Type.STRING },
-              phoneticIpa: { type: Type.STRING },
-              grammarSuggestions: { type: Type.STRING },
+          config: {
+            thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                translatedText: { type: Type.STRING },
+                phoneticIpa: { type: Type.STRING },
+                grammarSuggestions: { type: Type.STRING },
+              },
+              required: ['translatedText', 'phoneticIpa', 'grammarSuggestions'],
             },
-            required: ['translatedText', 'phoneticIpa', 'grammarSuggestions'],
           },
-        },
-      });
+        }),
+        GEMINI_TIMEOUT_MS,
+        'Gemini translation'
+      );
 
       const parsed = JSON.parse((resp.text ?? '{}').trim() || '{}');
       res.json({

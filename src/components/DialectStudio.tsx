@@ -547,6 +547,7 @@ export const DialectStudio: React.FC<DialectStudioProps> = ({
       }
 
       const base64Audio = await blobToBase64(audioBlob);
+      setStatusBanner({ type: 'info', text: 'Sending audio to Gemini server for transcription...' });
       const res = await fetch('/api/transcribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -569,7 +570,7 @@ export const DialectStudio: React.FC<DialectStudioProps> = ({
       setModelTag(data.modelUsed || 'gemini-4-hydrogen');
       setStatusBanner({
         type: 'success',
-        text: 'Audio transcribed, translated, and evaluated for WER/CER accuracy.',
+        text: `Transcribed & translated: ${data.sourceTranscript?.slice(0, 60)} → ${data.translatedText?.slice(0, 60)}`,
       });
     } catch (err) {
       setStatusBanner({
