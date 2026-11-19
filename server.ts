@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = Number(process.env.PORT) || 3000;
-const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS) || 45000;
+const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS) || 90000;
 
 function getGeminiClient(): GoogleGenAI {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -204,10 +204,10 @@ async function startServer() {
 
       const ai = getGeminiClient();
 
-      // Multimodal audio transcription + translation + IPA + grammar via gemini-4-hydrogen
+      // Multimodal audio transcription + translation + IPA + grammar
       const analysisResp = await withTimeout(
         ai.models.generateContent({
-          model: 'gemini-4-hydrogen',
+          model: 'gemini-2.5-flash',
           contents: {
             parts: [
               {
@@ -263,7 +263,7 @@ Return a JSON object with:
         translatedText: parsed.translatedText || '',
         phoneticIpa: parsed.phoneticIpa || '',
         grammarSuggestions: parsed.grammarSuggestions || '',
-        modelUsed: 'gemini-4-hydrogen (Multimodal Audio ASR + Translation)',
+        modelUsed: 'gemini-2.5-flash (Multimodal Audio ASR + Translation)',
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Transcription failed.';
@@ -285,7 +285,7 @@ Return a JSON object with:
       const ai = getGeminiClient();
       const resp = await withTimeout(
         ai.models.generateContent({
-          model: 'gemini-4-hydrogen',
+          model: 'gemini-2.5-flash',
           contents: `You are an expert Indian computational linguist preserving low-resource dialects.
 Source Dialect: ${dialect}
 Target Language: ${target}
@@ -315,7 +315,7 @@ Translate accurately into ${target}, provide an IPA/Romanized phonetic guide, an
         translatedText: parsed.translatedText || '',
         phoneticIpa: parsed.phoneticIpa || '',
         grammarSuggestions: parsed.grammarSuggestions || '',
-        modelUsed: 'gemini-4-hydrogen',
+        modelUsed: 'gemini-2.5-flash',
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Translation failed.';
