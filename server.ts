@@ -332,30 +332,34 @@ Translate accurately into ${target}, provide an IPA/Romanized phonetic guide, an
         return;
       }
       const ai = getGeminiClient();
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.8-flash-lite-tts',
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              {
-                text: text.trim().slice(0, 1200),
-                speechMetadata: {
-                  style: `Clear, warm, natural pronunciation in ${typeof language === 'string' ? language : 'English'}`,
+      const response = await withTimeout(
+        ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  text: text.trim().slice(0, 1200),
+                  speechMetadata: {
+                    style: `Clear, warm, natural pronunciation in ${typeof language === 'string' ? language : 'English'}`,
+                  },
                 },
+              ],
+            },
+          ],
+          config: {
+            responseModalities: ['AUDIO'],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: 'Kore' },
               },
-            ],
-          },
-        ],
-        config: {
-          responseModalities: ['AUDIO'],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: 'Kore' },
             },
           },
-        },
-      });
+        }),
+        GEMINI_TIMEOUT_MS,
+        'Gemini TTS'
+      );
 
       const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       if (!base64Audio) {
