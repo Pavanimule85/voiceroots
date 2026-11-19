@@ -1,0 +1,13 @@
+dialect_id,dialect_name,sample_phrase,tts_voice,audio_file
+gondi,Gondi (गोंडी),नावा पोरिया तितोर दाता हनांतोर,hi-IN-MadhurNeural,gondi.wav
+kui,Kui (कुई),आनु नेगी मसी साला मुसी,hi-IN-MadhurNeural,kui.wav
+tulu,Tulu (ತುಳು),ಯಾನ್ ಇತ್ತೆ ಊರುಗು ಪೋಪೆ,kn-IN-GaganNeural,tulu.wav
+kodava,Kodava Takk (ಕೊಡವ),ನಾನ್ ಇಂದ್ ಊರ್‌ಕ್ ಪೋಪ,kn-IN-GaganNeural,kodava.wav
+kurukh,Kurukh / Oraon (कुड़ुख़),एन ईस अड्डा नु रअदन,hi-IN-MadhurNeural,kurukh.wav
+mundari,Mundari (मुण्डारी),अले ओड़ाक् तेले सेनोः ताना,hi-IN-MadhurNeural,mundari.wav
+bhili,Bhili / Wagdi (भीली),हूँ आज गाम जावानो छूँ,hi-IN-MadhurNeural,bhili.wav
+garhwali,Garhwali (गढ़वळि),मी आज अपणा गौं जाणु छौं,hi-IN-MadhurNeural,garhwali.wav
+kumaoni,Kumaoni (कुमाऊँनी),मै आज पहाड़ जै रयूँ,hi-IN-MadhurNeural,kumaoni.wav
+lepcha,Lepcha (ᰛᰩᰴ),गो रिं नोंग ल्युंग कात् नोन,hi-IN-MadhurNeural,lepcha.wav
+toda,Toda (தோதா),ஓன் இத் முந்நூற் போன்,ta-IN-ValluvarNeural,toda.wav
+halbi,Halbi (हल्बी),मंय आज हाट जात हंव,hi-IN-MadhurNeural,halbi.wav
