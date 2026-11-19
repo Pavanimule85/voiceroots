@@ -15,8 +15,8 @@ export default defineConfig(() => {
         includeAssets: ['icon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
         manifest: {
           id: '/',
-          name: 'Voice Roos Dialect Studio',
-          short_name: 'Voice Roos',
+          name: 'Voice Roots Dialect Studio',
+          short_name: 'Voice Roots',
           description: 'Offline-capable linguistic preservation, real-time audio transcription, WER/CER evaluation, and dialect translation for low-resource Indian languages.',
           theme_color: '#0F172A',
           background_color: '#F8FAFC',

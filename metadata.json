@@ -1,5 +1,5 @@
 {
-  "name": "Voice Roos",
+  "name": "Voice Roots",
   "description": "Offline-capable linguistic preservation, real-time audio transcription, WER/CER evaluation, and dialect translation platform for India's low-resource languages.",
   "requestFramePermissions": ["microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

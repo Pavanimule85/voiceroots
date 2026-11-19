@@ -37,7 +37,7 @@ export const PWAInstallButton: React.FC = () => {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
             <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-xl">
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                Install Voice Roos Offline App
+                Install Voice Roots Offline App
               </h3>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                 1. Tap the <strong>Share</strong> button in Safari toolbar.<br />

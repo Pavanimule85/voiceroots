@@ -531,7 +531,7 @@ Output JSON with: transcript (partial/final), translation, isFinal (boolean).`,
     const httpServer = createServer(app);
     setupLiveTranslationWS(httpServer);
     httpServer.listen(PORT, '0.0.0.0', () => {
-      console.log(`Voice Roos full-stack server running on http://0.0.0.0:${PORT}`);
+      console.log(`Voice Roots full-stack server running on http://0.0.0.0:${PORT}`);
       console.log(`Live translation WebSocket at ws://0.0.0.0:${PORT}/api/live-translate`);
     });
   } else {
@@ -546,7 +546,7 @@ Output JSON with: transcript (partial/final), translation, isFinal (boolean).`,
     const wsHttpServer = createServer();
     setupLiveTranslationWS(wsHttpServer);
     wsHttpServer.listen(PORT + 2, '0.0.0.0', () => {
-      console.log(`Voice Roos full-stack server running on http://0.0.0.0:${PORT}`);
+      console.log(`Voice Roots full-stack server running on http://0.0.0.0:${PORT}`);
       console.log(`Live translation WebSocket at ws://0.0.0.0:${PORT + 2}/api/live-translate`);
     });
   }

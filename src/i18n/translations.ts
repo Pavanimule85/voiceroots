@@ -166,7 +166,7 @@ export const LOCALE_OPTIONS: { code: LocaleCode; label: string; native: string }
 
 export const UI_STRINGS: Record<LocaleCode, Record<string, string>> = {
   en: {
-    brand: 'Voice Roos',
+    brand: 'Voice Roots',
     navStudio: 'Studio',
     navWer: 'WER & CER',
     navCorpus: 'Corpus',
@@ -186,7 +186,7 @@ export const UI_STRINGS: Record<LocaleCode, Record<string, string>> = {
     signInGoogle: 'Sign In with Google',
   },
   hi: {
-    brand: 'Voice Roos',
+    brand: 'Voice Roots',
     navStudio: 'स्टूडियो',
     navWer: 'WER और CER',
     navCorpus: 'कोष',
@@ -206,7 +206,7 @@ export const UI_STRINGS: Record<LocaleCode, Record<string, string>> = {
     signInGoogle: 'Google से साइन इन करें',
   },
   te: {
-    brand: 'Voice Roos',
+    brand: 'Voice Roots',
     navStudio: 'స్టూడియో',
     navWer: 'WER & CER',
     navCorpus: 'భాషా కోశం',
@@ -226,7 +226,7 @@ export const UI_STRINGS: Record<LocaleCode, Record<string, string>> = {
     signInGoogle: 'Google తో సైన్ ఇన్ చేయండి',
   },
   ta: {
-    brand: 'Voice Roos',
+    brand: 'Voice Roots',
     navStudio: 'ஸ்டுடியோ',
     navWer: 'WER & CER',
     navCorpus: 'தொகுப்பு',
@@ -246,7 +246,7 @@ export const UI_STRINGS: Record<LocaleCode, Record<string, string>> = {
     signInGoogle: 'Google மூலம் உள்நுழையவும்',
   },
   or: {
-    brand: 'Voice Roos',
+    brand: 'Voice Roots',
     navStudio: 'ଷ୍ଟୁଡିଓ',
     navWer: 'WER & CER',
     navCorpus: 'ଭାଷା କୋଷ',
@@ -266,7 +266,7 @@ export const UI_STRINGS: Record<LocaleCode, Record<string, string>> = {
     signInGoogle: 'Google ସହିତ ସାଇନ୍ ଇନ୍',
   },
   kn: {
-    brand: 'Voice Roos',
+    brand: 'Voice Roots',
     navStudio: 'ಸ್ಟುಡಿಯೋ',
     navWer: 'WER & CER',
     navCorpus: 'ಭಾಷಾ ಕೋಶ',
