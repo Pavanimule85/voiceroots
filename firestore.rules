@@ -1,0 +1,477 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Primitive Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isBootstrappedAdmin() {
+      return isVerifiedUser() && request.auth.token.email == 'pavanimule85@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() || (
+        isVerifiedUser() && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Entity Validation Blueprints ---
+    function isValidUserProfile(data) {
+      return data.keys().hasAll([
+          'uid', 'displayName', 'role', 'department', 'preferredLocale',
+          'primaryDialect', 'totalRecordings', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'displayName', 'role', 'department', 'preferredLocale',
+          'primaryDialect', 'totalRecordings', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.uid)
+        && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100
+        && data.role in ['contributor', 'reviewer', 'lead', 'admin']
+        && data.department is string && data.department.size() >= 1 && data.department.size() <= 80
+        && data.preferredLocale is string && data.preferredLocale.size() >= 2 && data.preferredLocale.size() <= 16
+        && data.primaryDialect is string && data.primaryDialect.size() >= 1 && data.primaryDialect.size() <= 64
+        && data.totalRecordings is number && data.totalRecordings >= 0 && data.totalRecordings <= 1000000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidUserPrivateInfo(data) {
+      return data.keys().hasAll(['uid', 'email', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'phone', 'regionNotes', 'encryptedBackupKeyHash', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 160
+        && (!('phone' in data) || (data.phone is string && data.phone.size() <= 32))
+        && (!('regionNotes' in data) || (data.regionNotes is string && data.regionNotes.size() <= 500))
+        && (!('encryptedBackupKeyHash' in data) || (data.encryptedBackupKeyHash is string && data.encryptedBackupKeyHash.size() <= 128))
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAdminRegistry(data) {
+      return data.keys().hasAll(['uid', 'grantedBy', 'createdAt'])
+        && data.keys().hasOnly(['uid', 'grantedBy', 'createdAt'])
+        && isValidId(data.uid)
+        && isValidId(data.grantedBy)
+        && data.createdAt is timestamp;
+    }
+
+    function isValidDialectTranscript(data) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'ownerName', 'department', 'sourceDialect',
+          'targetLanguage', 'title', 'sourceTranscript', 'translatedText',
+          'phoneticIpa', 'grammarNotes', 'referenceTranscript', 'wer', 'cer',
+          'audioDurationSec', 'sourceType', 'isEncrypted', 'encryptedPayload',
+          'status', 'visibility', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'ownerName', 'department', 'sourceDialect',
+          'targetLanguage', 'title', 'sourceTranscript', 'translatedText',
+          'phoneticIpa', 'grammarNotes', 'referenceTranscript', 'wer', 'cer',
+          'audioDurationSec', 'sourceType', 'isEncrypted', 'encryptedPayload',
+          'status', 'visibility', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && isValidId(data.ownerId)
+        && data.ownerName is string && data.ownerName.size() >= 1 && data.ownerName.size() <= 100
+        && data.department is string && data.department.size() >= 1 && data.department.size() <= 80
+        && data.sourceDialect is string && data.sourceDialect.size() >= 1 && data.sourceDialect.size() <= 64
+        && data.targetLanguage is string && data.targetLanguage.size() >= 1 && data.targetLanguage.size() <= 64
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && data.sourceTranscript is string && data.sourceTranscript.size() <= 12000
+        && data.translatedText is string && data.translatedText.size() <= 12000
+        && data.phoneticIpa is string && data.phoneticIpa.size() <= 6000
+        && data.grammarNotes is string && data.grammarNotes.size() <= 4000
+        && data.referenceTranscript is string && data.referenceTranscript.size() <= 12000
+        && data.wer is number && data.wer >= 0 && data.wer <= 1000
+        && data.cer is number && data.cer >= 0 && data.cer <= 1000
+        && data.audioDurationSec is number && data.audioDurationSec >= 0 && data.audioDurationSec <= 7200
+        && data.sourceType in ['recorded', 'uploaded', 'text']
+        && data.isEncrypted is bool
+        && data.encryptedPayload is string && data.encryptedPayload.size() <= 24000
+        && data.status in ['draft', 'pending_review', 'verified']
+        && data.visibility in ['private', 'archive']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidModelEvaluation(data) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'dialect', 'modelName', 'referenceText',
+          'hypothesisText', 'wer', 'cer', 'substitutions', 'deletions',
+          'insertions', 'referenceWords', 'department', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'dialect', 'modelName', 'referenceText',
+          'hypothesisText', 'wer', 'cer', 'substitutions', 'deletions',
+          'insertions', 'referenceWords', 'department', 'createdAt'
+        ])
+        && isValidId(data.id)
+        && isValidId(data.ownerId)
+        && data.dialect is string && data.dialect.size() >= 1 && data.dialect.size() <= 64
+        && data.modelName is string && data.modelName.size() >= 1 && data.modelName.size() <= 64
+        && data.referenceText is string && data.referenceText.size() >= 1 && data.referenceText.size() <= 8000
+        && data.hypothesisText is string && data.hypothesisText.size() >= 1 && data.hypothesisText.size() <= 8000
+        && data.wer is number && data.wer >= 0 && data.wer <= 1000
+        && data.cer is number && data.cer >= 0 && data.cer <= 1000
+        && data.substitutions is number && data.substitutions >= 0 && data.substitutions <= 10000
+        && data.deletions is number && data.deletions >= 0 && data.deletions <= 10000
+        && data.insertions is number && data.insertions >= 0 && data.insertions <= 10000
+        && data.referenceWords is number && data.referenceWords >= 1 && data.referenceWords <= 10000
+        && data.department is string && data.department.size() >= 1 && data.department.size() <= 80
+        && data.createdAt is timestamp;
+    }
+
+    function isValidSystemNotification(data) {
+      return data.keys().hasAll([
+          'id', 'recipientId', 'createdBy', 'title', 'message',
+          'severity', 'category', 'read', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'recipientId', 'createdBy', 'title', 'message',
+          'severity', 'category', 'read', 'createdAt'
+        ])
+        && isValidId(data.id)
+        && isValidId(data.recipientId)
+        && isValidId(data.createdBy)
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 140
+        && data.message is string && data.message.size() >= 1 && data.message.size() <= 600
+        && data.severity in ['info', 'warning', 'critical']
+        && data.category is string && data.category.size() >= 1 && data.category.size() <= 40
+        && data.read is bool
+        && data.createdAt is timestamp;
+    }
+
+    function isValidDepartmentMetric(data) {
+      return data.keys().hasAll([
+          'id', 'name', 'region', 'targetHours', 'completedHours',
+          'activeDialectsCount', 'avgWer', 'avgCer', 'contributorsCount',
+          'updatedBy', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'name', 'region', 'targetHours', 'completedHours',
+          'activeDialectsCount', 'avgWer', 'avgCer', 'contributorsCount',
+          'updatedBy', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 100
+        && data.region is string && data.region.size() >= 1 && data.region.size() <= 80
+        && data.targetHours is number && data.targetHours >= 0 && data.targetHours <= 100000
+        && data.completedHours is number && data.completedHours >= 0 && data.completedHours <= 100000
+        && data.activeDialectsCount is number && data.activeDialectsCount >= 0 && data.activeDialectsCount <= 500
+        && data.avgWer is number && data.avgWer >= 0 && data.avgWer <= 1000
+        && data.avgCer is number && data.avgCer >= 0 && data.avgCer <= 1000
+        && data.contributorsCount is number && data.contributorsCount >= 0 && data.contributorsCount <= 100000
+        && isValidId(data.updatedBy)
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidApiWebhook(data) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'name', 'endpointUrl', 'eventType',
+          'active', 'lastStatus', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'name', 'endpointUrl', 'eventType',
+          'active', 'lastStatus', 'createdAt'
+        ])
+        && isValidId(data.id)
+        && isValidId(data.ownerId)
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 100
+        && data.endpointUrl is string && data.endpointUrl.size() >= 8 && data.endpointUrl.size() <= 300
+        && data.eventType in ['transcript.created', 'transcript.verified', 'wer.alert', 'corpus.sync']
+        && data.active is bool
+        && data.lastStatus is string && data.lastStatus.size() <= 40
+        && data.createdAt is timestamp;
+    }
+
+    // --- Collection Rules ---
+
+    // 1. User Profiles (non-PII) & isolated Private Info subcollection
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isBootstrappedAdmin());
+
+      allow create: if isVerifiedUser()
+        && isValidId(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == userId
+        && incoming().uid == request.auth.uid
+        && incoming().totalRecordings == 0
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (incoming().role == 'contributor' || isAdmin());
+
+      allow update: if isVerifiedUser()
+        && isValidId(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (
+            isOwner(userId)
+            && incoming().role == existing().role
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'displayName', 'department', 'preferredLocale',
+              'primaryDialect', 'totalRecordings', 'updatedAt'
+            ])
+          )
+          ||
+          (
+            isAdmin()
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'displayName', 'role', 'department', 'preferredLocale',
+              'primaryDialect', 'totalRecordings', 'updatedAt'
+            ])
+          )
+        );
+
+      allow delete: if isValidId(userId) && isAdmin();
+
+      match /private/{docId} {
+        allow get: if isValidId(userId) && isValidId(docId) && (isOwner(userId) || isAdmin());
+        allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isBootstrappedAdmin());
+
+        allow create: if isVerifiedUser()
+          && isValidId(userId)
+          && isValidId(docId)
+          && isValidUserPrivateInfo(incoming())
+          && isOwner(userId)
+          && incoming().uid == userId
+          && incoming().updatedAt == request.time;
+
+        allow update: if isVerifiedUser()
+          && isValidId(userId)
+          && isValidId(docId)
+          && isValidUserPrivateInfo(incoming())
+          && (isOwner(userId) || isAdmin())
+          && incoming().uid == existing().uid
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'email', 'phone', 'regionNotes', 'encryptedBackupKeyHash', 'updatedAt'
+          ]);
+
+        allow delete: if isValidId(userId) && isValidId(docId) && (isOwner(userId) || isAdmin());
+      }
+    }
+
+    // 2. Trusted Admin Registry
+    match /admins/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isBootstrappedAdmin());
+
+      allow create: if isVerifiedUser()
+        && isValidId(userId)
+        && isValidAdminRegistry(incoming())
+        && incoming().uid == userId
+        && incoming().createdAt == request.time
+        && (isAdmin() || (isBootstrappedAdmin() && userId == request.auth.uid));
+
+      allow update: if false;
+      allow delete: if isValidId(userId) && isBootstrappedAdmin();
+    }
+
+    // 3. Dialect Transcripts & Translations
+    match /transcripts/{transcriptId} {
+      allow get: if isValidId(transcriptId) && isSignedIn() && (
+        existing().ownerId == request.auth.uid
+        || existing().visibility == 'archive'
+        || isAdmin()
+      );
+
+      allow list: if isSignedIn() && (
+        resource.data.ownerId == request.auth.uid
+        || resource.data.visibility == 'archive'
+        || isBootstrappedAdmin()
+      );
+
+      allow create: if isVerifiedUser()
+        && isValidId(transcriptId)
+        && isValidDialectTranscript(incoming())
+        && incoming().id == transcriptId
+        && incoming().ownerId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (incoming().status in ['draft', 'pending_review'] || isAdmin());
+
+      allow update: if isVerifiedUser()
+        && isValidId(transcriptId)
+        && isValidDialectTranscript(incoming())
+        && incoming().id == existing().id
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin()
+          || (
+            existing().ownerId == request.auth.uid
+            && existing().status != 'verified'
+            && incoming().status in ['draft', 'pending_review']
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'title', 'sourceDialect', 'targetLanguage', 'sourceTranscript',
+              'translatedText', 'phoneticIpa', 'grammarNotes', 'referenceTranscript',
+              'wer', 'cer', 'isEncrypted', 'encryptedPayload', 'status',
+              'visibility', 'updatedAt'
+            ])
+          )
+        );
+
+      allow delete: if isVerifiedUser() && isValidId(transcriptId) && (
+        isAdmin() || (existing().ownerId == request.auth.uid && existing().status != 'verified')
+      );
+    }
+
+    // 4. Model WER/CER Evaluations
+    match /evaluations/{evalId} {
+      allow get: if isValidId(evalId) && isSignedIn() && (
+        existing().ownerId == request.auth.uid || isAdmin()
+      );
+
+      allow list: if isSignedIn() && (
+        resource.data.ownerId == request.auth.uid || isBootstrappedAdmin()
+      );
+
+      allow create: if isVerifiedUser()
+        && isValidId(evalId)
+        && isValidModelEvaluation(incoming())
+        && incoming().id == evalId
+        && incoming().ownerId == request.auth.uid
+        && incoming().createdAt == request.time;
+
+      allow update: if false;
+      allow delete: if isVerifiedUser() && isValidId(evalId) && (
+        existing().ownerId == request.auth.uid || isAdmin()
+      );
+    }
+
+    // 5. Real-Time Notifications
+    match /notifications/{notifId} {
+      allow get: if isValidId(notifId) && isSignedIn() && (
+        existing().recipientId == request.auth.uid
+        || existing().recipientId == 'all'
+        || isAdmin()
+      );
+
+      allow list: if isSignedIn() && (
+        resource.data.recipientId == request.auth.uid
+        || resource.data.recipientId == 'all'
+        || isBootstrappedAdmin()
+      );
+
+      allow create: if isVerifiedUser()
+        && isValidId(notifId)
+        && isValidSystemNotification(incoming())
+        && incoming().id == notifId
+        && incoming().createdBy == request.auth.uid
+        && incoming().createdAt == request.time
+        && (incoming().recipientId == request.auth.uid || isAdmin());
+
+      allow update: if isVerifiedUser()
+        && isValidId(notifId)
+        && isValidSystemNotification(incoming())
+        && incoming().id == existing().id
+        && incoming().createdBy == existing().createdBy
+        && incoming().recipientId == existing().recipientId
+        && incoming().createdAt == existing().createdAt
+        && (
+          isAdmin()
+          || (
+            existing().recipientId == request.auth.uid
+            && incoming().diff(existing()).affectedKeys().hasOnly(['read'])
+          )
+        );
+
+      allow delete: if isVerifiedUser() && isValidId(notifId) && (
+        existing().recipientId == request.auth.uid || isAdmin()
+      );
+    }
+
+    // 6. Department KPIs
+    match /departments/{deptId} {
+      allow get: if isValidId(deptId) && isSignedIn();
+      allow list: if isSignedIn() && resource.data.targetHours >= 0;
+
+      allow create: if isVerifiedUser()
+        && isValidId(deptId)
+        && isValidDepartmentMetric(incoming())
+        && incoming().id == deptId
+        && incoming().updatedBy == request.auth.uid
+        && incoming().updatedAt == request.time
+        && isAdmin();
+
+      allow update: if isVerifiedUser()
+        && isValidId(deptId)
+        && isValidDepartmentMetric(incoming())
+        && incoming().id == existing().id
+        && incoming().updatedBy == request.auth.uid
+        && incoming().updatedAt == request.time
+        && isAdmin()
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'region', 'targetHours', 'completedHours',
+          'activeDialectsCount', 'avgWer', 'avgCer', 'contributorsCount',
+          'updatedBy', 'updatedAt'
+        ]);
+
+      allow delete: if isValidId(deptId) && isAdmin();
+    }
+
+    // 7. Third-Party API Webhooks
+    match /webhooks/{webhookId} {
+      allow get: if isValidId(webhookId) && isSignedIn() && (
+        existing().ownerId == request.auth.uid || isAdmin()
+      );
+
+      allow list: if isSignedIn() && (
+        resource.data.ownerId == request.auth.uid || isBootstrappedAdmin()
+      );
+
+      allow create: if isVerifiedUser()
+        && isValidId(webhookId)
+        && isValidApiWebhook(incoming())
+        && incoming().id == webhookId
+        && incoming().ownerId == request.auth.uid
+        && incoming().createdAt == request.time;
+
+      allow update: if isVerifiedUser()
+        && isValidId(webhookId)
+        && isValidApiWebhook(incoming())
+        && incoming().id == existing().id
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && (existing().ownerId == request.auth.uid || isAdmin())
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'endpointUrl', 'eventType', 'active', 'lastStatus'
+        ]);
+
+      allow delete: if isVerifiedUser() && isValidId(webhookId) && (
+        existing().ownerId == request.auth.uid || isAdmin()
+      );
+    }
+  }
+}

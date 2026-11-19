@@ -1,0 +1,471 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Publicly scoped contributor profile and RBAC assignment without PII.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "role": {
+          "type": "string",
+          "enum": ["contributor", "reviewer", "lead", "admin"]
+        },
+        "department": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "preferredLocale": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 16
+        },
+        "primaryDialect": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "totalRecordings": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "displayName", "role", "department", "preferredLocale", "primaryDialect", "totalRecordings", "createdAt", "updatedAt"]
+    },
+    "UserPrivateInfo": {
+      "title": "UserPrivateInfo",
+      "description": "Isolated PII and encrypted vault metadata for a user.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 160
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "regionNotes": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "encryptedBackupKeyHash": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "updatedAt"]
+    },
+    "AdminRegistry": {
+      "title": "AdminRegistry",
+      "description": "Trusted admin identity marker document.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "grantedBy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "grantedBy", "createdAt"]
+    },
+    "DialectTranscript": {
+      "title": "DialectTranscript",
+      "description": "Recorded or uploaded dialect audio transcription, translation, grammar suggestions, and WER/CER metrics.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "department": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "sourceDialect": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "targetLanguage": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "sourceTranscript": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "translatedText": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "phoneticIpa": {
+          "type": "string",
+          "maxLength": 6000
+        },
+        "grammarNotes": {
+          "type": "string",
+          "maxLength": 4000
+        },
+        "referenceTranscript": {
+          "type": "string",
+          "maxLength": 12000
+        },
+        "wer": {
+          "type": "number"
+        },
+        "cer": {
+          "type": "number"
+        },
+        "audioDurationSec": {
+          "type": "number"
+        },
+        "sourceType": {
+          "type": "string",
+          "enum": ["recorded", "uploaded", "text"]
+        },
+        "isEncrypted": {
+          "type": "boolean"
+        },
+        "encryptedPayload": {
+          "type": "string",
+          "maxLength": 24000
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "pending_review", "verified"]
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["private", "archive"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id", "ownerId", "ownerName", "department", "sourceDialect",
+        "targetLanguage", "title", "sourceTranscript", "translatedText",
+        "phoneticIpa", "grammarNotes", "referenceTranscript", "wer", "cer",
+        "audioDurationSec", "sourceType", "isEncrypted", "encryptedPayload",
+        "status", "visibility", "createdAt", "updatedAt"
+      ]
+    },
+    "ModelEvaluation": {
+      "title": "ModelEvaluation",
+      "description": "WER and CER benchmark evaluation record for speech-to-text accuracy tracking.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "dialect": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "modelName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "referenceText": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "hypothesisText": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "wer": {
+          "type": "number"
+        },
+        "cer": {
+          "type": "number"
+        },
+        "substitutions": {
+          "type": "number"
+        },
+        "deletions": {
+          "type": "number"
+        },
+        "insertions": {
+          "type": "number"
+        },
+        "referenceWords": {
+          "type": "number"
+        },
+        "department": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id", "ownerId", "dialect", "modelName", "referenceText",
+        "hypothesisText", "wer", "cer", "substitutions", "deletions",
+        "insertions", "referenceWords", "department", "createdAt"
+      ]
+    },
+    "SystemNotification": {
+      "title": "SystemNotification",
+      "description": "Real-time notifications for dialect sync completions, WER alerts, and updates.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "recipientId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdBy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 140
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 600
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["info", "warning", "critical"]
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "read": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "recipientId", "createdBy", "title", "message", "severity", "category", "read", "createdAt"]
+    },
+    "DepartmentMetric": {
+      "title": "DepartmentMetric",
+      "description": "Department KPI records for administrative analytics and resource allocation.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "region": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "targetHours": {
+          "type": "number"
+        },
+        "completedHours": {
+          "type": "number"
+        },
+        "activeDialectsCount": {
+          "type": "number"
+        },
+        "avgWer": {
+          "type": "number"
+        },
+        "avgCer": {
+          "type": "number"
+        },
+        "contributorsCount": {
+          "type": "number"
+        },
+        "updatedBy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "name", "region", "targetHours", "completedHours", "activeDialectsCount", "avgWer", "avgCer", "contributorsCount", "updatedBy", "updatedAt"]
+    },
+    "ApiWebhook": {
+      "title": "ApiWebhook",
+      "description": "Third-party REST webhook integration configured by an administrator or contributor.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "endpointUrl": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 300
+        },
+        "eventType": {
+          "type": "string",
+          "enum": ["transcript.created", "transcript.verified", "wer.alert", "corpus.sync"]
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "lastStatus": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "ownerId", "name", "endpointUrl", "eventType", "active", "lastStatus", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile and role metadata (no PII)."
+    },
+    "/users/{userId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/UserPrivateInfo" },
+      "description": "Isolated PII and encrypted key backup metadata."
+    },
+    "/admins/{userId}": {
+      "schema": { "$ref": "#/entities/AdminRegistry" },
+      "description": "Trusted administrator lookup registry."
+    },
+    "/transcripts/{transcriptId}": {
+      "schema": { "$ref": "#/entities/DialectTranscript" },
+      "description": "Dialect audio transcriptions, translations, grammar notes, and WER/CER metrics."
+    },
+    "/evaluations/{evalId}": {
+      "schema": { "$ref": "#/entities/ModelEvaluation" },
+      "description": "Standalone speech-to-text WER/CER evaluation benchmarks."
+    },
+    "/notifications/{notifId}": {
+      "schema": { "$ref": "#/entities/SystemNotification" },
+      "description": "Real-time notifications for users and system broadcasts."
+    },
+    "/departments/{deptId}": {
+      "schema": { "$ref": "#/entities/DepartmentMetric" },
+      "description": "Department KPI records for management analytics."
+    },
+    "/webhooks/{webhookId}": {
+      "schema": { "$ref": "#/entities/ApiWebhook" },
+      "description": "Third-party API webhook subscriptions."
+    }
+  }
+}
