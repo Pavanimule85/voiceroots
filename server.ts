@@ -207,7 +207,7 @@ async function startServer() {
       // Multimodal audio transcription + translation + IPA + grammar
       const analysisResp = await withTimeout(
         ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.8-flash',
           contents: {
             parts: [
               {
@@ -263,7 +263,7 @@ Return a JSON object with:
         translatedText: parsed.translatedText || '',
         phoneticIpa: parsed.phoneticIpa || '',
         grammarSuggestions: parsed.grammarSuggestions || '',
-        modelUsed: 'gemini-2.5-flash (Multimodal Audio ASR + Translation)',
+        modelUsed: 'gemini-3.8-flash (Multimodal Audio ASR + Translation)',
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Transcription failed.';
@@ -285,7 +285,7 @@ Return a JSON object with:
       const ai = getGeminiClient();
       const resp = await withTimeout(
         ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.8-flash',
           contents: `You are an expert Indian computational linguist preserving low-resource dialects.
 Source Dialect: ${dialect}
 Target Language: ${target}
@@ -315,7 +315,7 @@ Translate accurately into ${target}, provide an IPA/Romanized phonetic guide, an
         translatedText: parsed.translatedText || '',
         phoneticIpa: parsed.phoneticIpa || '',
         grammarSuggestions: parsed.grammarSuggestions || '',
-        modelUsed: 'gemini-2.5-flash',
+        modelUsed: 'gemini-3.8-flash',
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Translation failed.';
@@ -334,7 +334,7 @@ Translate accurately into ${target}, provide an IPA/Romanized phonetic guide, an
       const ai = getGeminiClient();
       const response = await withTimeout(
         ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-3.8-flash',
           contents: [
             {
               role: 'user',
@@ -445,7 +445,7 @@ Translate accurately into ${target}, provide an IPA/Romanized phonetic guide, an
 
             // Create Gemini Live session for streaming audio
             const liveSession = await ai.live.connect({
-              model: 'gemini-2.5-flash-preview-native-audio-dialog',
+              model: 'gemini-3.8-flash-preview-native-audio-dialog',
               config: {
                 responseModalities: ['TEXT'],
                 systemInstruction: `You are an expert Indian computational linguist specializing in low-resource and endangered dialects.
